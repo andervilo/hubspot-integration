@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:hubspotdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+
+hubspot:
+  client-id: ${HUBSPOT_CLIENT_ID:1ee8d8b4-5796-460f-ba3f-7f2f4443c926}
+  client-secret: ${HUBSPOT_CLIENT_SECRET:73635c16-7009-4917-b2ec-3dcd46d2eefe}
+  redirect-uri: ${HUBSPOT_REDIRECT_URI:http://localhost:8080/auth/callback}
+  scopes: ${HUBSPOT_SCOPES:crm.objects.contacts.write crm.objects.contacts.read oauth}
+  auth-url: ${HUBSPOT_AUTH_URL:https://app.hubspot.com/oauth/authorize}
+  token-url: ${HUBSPOT_TOKEN_URL:https://api.hubapi.com/oauth/v1/token}
+  api-url: ${HUBSPOT_API_URL:https://api.hubapi.com}
