@@ -16,8 +16,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/**",
-                                "/webhook/**",
                                 "/swagger-ui/**",
+                                "/webhook/**",
                                 "/v3/api-docs/**",
                                 "/h2-console/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/contacts").permitAll()
