@@ -5,6 +5,7 @@ import com.hubspot.integration.app.dto.command.CreateContactCommand;
 import com.hubspot.integration.app.dto.command.HubSpotContactCreateCommand;
 import com.hubspot.integration.infra.configs.OAuthConfig;
 import com.hubspot.integration.infra.utils.RateLimiter;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,14 @@ public class ContactService {
         var hubspotContact = HubSpotContactCreateCommand.from(command);
         var hubspotToken = tokenService.getToken();
         var token = "Bearer "+ hubspotToken.getAccessToken();
-        hubSpotContactClient.createContact(token, hubspotContact);
+
+        try{
+            hubSpotContactClient.createContact(token, hubspotContact);
+        } catch (FeignException e) {
+            log.error("Erro ao chamar HubSpot: {} {}", + e.status(), e.getMessage());
+            throw e;
+        }
+
         //rateLimiter.acquire();
-        // TODO: chamada ao endpoint do HubSpot para criar contato
     }
 }
