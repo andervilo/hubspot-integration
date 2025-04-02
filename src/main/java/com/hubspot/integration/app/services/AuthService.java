@@ -10,6 +10,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.LocalDate;
+
 import static com.hubspot.integration.app.constants.AppConstants.*;
 
 @Service
@@ -53,7 +55,7 @@ public class AuthService {
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 HubspotTokenResponse tokenResponse = response.getBody();
                 tokenService.saveToken(tokenResponse);
-                return "Authentication successful! Token will expire at: " + tokenResponse.getExpiresIn();
+                return "Authentication successful! Token will expire at: " + LocalDate.now().plusDays(tokenResponse.getExpiresIn());
             } else {
                 throw new RuntimeException("Error change token: " + response.getStatusCode());
             }
