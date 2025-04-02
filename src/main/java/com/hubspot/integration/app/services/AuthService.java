@@ -29,7 +29,7 @@ public class AuthService {
                 .toUriString();
     }
 
-    public HubspotTokenResponse exchangeCodeForToken(String code) {
+    public String exchangeCodeForToken(String code) {
         try {
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
@@ -53,12 +53,12 @@ public class AuthService {
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 HubspotTokenResponse tokenResponse = response.getBody();
                 tokenService.saveToken(tokenResponse);
-                return tokenResponse;
+                return "Authentication successful! Token will expire at: " + tokenResponse.getExpiresIn();
             } else {
-                throw new RuntimeException("Erro ao trocar o token: " + response.getStatusCode());
+                throw new RuntimeException("Error change token: " + response.getStatusCode());
             }
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao trocar o token: " + e.getMessage(), e);
+            throw new RuntimeException("Error change token: " + e.getMessage(), e);
         }
     }
 

@@ -21,7 +21,7 @@ public class AuthController {
     }
 
     @GetMapping("/callback")
-    public ResponseEntity<HubspotTokenResponse> handleCallback(@RequestParam String code) {
+    public ResponseEntity<String> handleCallback(@RequestParam String code) {
         return ResponseEntity.ok(authService.exchangeCodeForToken(code));
     }
 }
