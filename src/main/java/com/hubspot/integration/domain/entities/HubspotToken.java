@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PUBLIC, force = true)
@@ -19,12 +21,14 @@ public class HubspotToken {
     private String refreshToken;
     private String tokenType;
     private Integer expiresIn;
+    private LocalDateTime expiresAt;
 
     private HubspotToken(String accessToken, String refreshToken, String tokenType, Integer expiresIn) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.tokenType = tokenType;
         this.expiresIn = expiresIn;
+        this.expiresAt = LocalDateTime.now().plusSeconds(expiresIn);
     }
 
     public static HubspotToken of(String accessToken, String refreshToken, String tokenType, Integer expiresIn) {
@@ -36,5 +40,9 @@ public class HubspotToken {
         this.refreshToken = refreshToken;
         this.tokenType = tokenType;
         this.expiresIn = expiresIn;
+    }
+
+    public boolean isExpired() {
+        return LocalDateTime.now().isAfter(expiresAt);
     }
 }
