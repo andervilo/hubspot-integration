@@ -12,6 +12,8 @@ public class FilterConfig {
     @Value("${hubspot.client-secret}")
     private String hubspotSecret;
 
+    private String webhookPath = "/webhook/contact";
+
     @Bean
     public FilterRegistrationBean<HubspotSignatureFilter> hubspotFilter() {
         FilterRegistrationBean<HubspotSignatureFilter> registrationBean = new FilterRegistrationBean<>();

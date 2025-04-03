@@ -34,6 +34,8 @@ public class HubspotSignatureFilter extends HttpFilter {
         String uri = request.getRequestURI();
         String signatureBase = method + uri + body;
 
+        log.info("WebhookFilter -> requet: {}", request.toString());
+
         String expectedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
         String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
 
