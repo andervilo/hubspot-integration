@@ -2,6 +2,8 @@ package com.hubspot.integration.app.services;
 
 import com.hubspot.integration.app.dto.response.HubspotTokenResponse;
 import com.hubspot.integration.infra.configs.OAuthConfig;
+import com.hubspot.integration.infra.exception.AuthenticateException;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -9,9 +11,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import static com.hubspot.integration.app.constants.AppConstants.*;
 
@@ -33,7 +32,7 @@ public class AuthService {
     }
 
     public String exchangeCodeForToken(String code) {
-        try {
+
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -47,6 +46,7 @@ public class AuthService {
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
+        try {
             ResponseEntity<HubspotTokenResponse> response = restTemplate.postForEntity(
                     config.tokenUrl,
                     request,
@@ -56,12 +56,12 @@ public class AuthService {
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 HubspotTokenResponse tokenResponse = response.getBody();
                 tokenService.saveToken(tokenResponse);
-                return "Authentication successful! Token will expire at: " + LocalDateTime.now().plusDays(tokenResponse.getExpiresIn());
+                return TOKEN_EXCHANGE_SUCCESS_MESSAGE;
             } else {
-                throw new RuntimeException("Error change token: " + response.getStatusCode());
+                throw new AuthenticateException(ERROR_CHANGE_TOKEN + response.getStatusCode());
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Error change token: " + e.getMessage(), e);
+        } catch (FeignException ex) {
+            throw ex;
         }
     }
 

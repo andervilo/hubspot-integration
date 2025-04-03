@@ -10,10 +10,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class HubTokenService {
 
+    public static final long ID = 1L;
     private final HubspotTokenRepository tokenRepository;
 
     public void saveToken(HubspotTokenResponse tokenResponse) {
-        HubspotToken existingToken = tokenRepository.findById(1L).orElse(null);
+        HubspotToken existingToken = tokenRepository.findById(ID).orElse(null);
         if (existingToken != null) {
             existingToken.update(
                     tokenResponse.getAccessToken(),
@@ -35,6 +36,6 @@ public class HubTokenService {
     }
 
     public HubspotToken getToken() {
-        return tokenRepository.findById(1L).orElse(null);
+        return tokenRepository.findById(ID).orElse(null);
     }
 }

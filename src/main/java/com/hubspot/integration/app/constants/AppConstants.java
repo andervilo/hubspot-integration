@@ -9,4 +9,9 @@ public class AppConstants {
     public static final String GRANT_TYPE = "grant_type";
     public static final String AUTHORIZATION_CODE = "authorization_code";
     public static final String CLIENT_SECRET = "client_secret";
+    public static final String TOKEN_EXCHANGE_SUCCESS_MESSAGE = "Authentication successful!";
+    public static final String ERROR_CHANGE_TOKEN = "Error change token: ";
+    public static final String EMAIL = "email";
+    public static final String FIRSTNAME = "firstname";
+    public static final String LASTNAME = "lastname";
 }

@@ -3,19 +3,16 @@ server:
 
 spring:
   datasource:
-    url: jdbc:h2:mem:hubspotdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASS}
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
 
 hubspot:
   client-id: ${HUBSPOT_CLIENT_ID:1ee8d8b4-5796-460f-ba3f-7f2f4443c926}
