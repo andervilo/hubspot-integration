@@ -40,6 +40,9 @@ public class HubspotSignatureFilter extends HttpFilter {
 
         log.info("WebhookFilter -> Comparing expected signature with received signature");
         if (!expectedSignature.equals(hubspotSignature)) {
+            log.error("WebhookFilter -> Signature validation failed");
+            log.error("WebhookFilter -> Expected: {}", expectedSignature);
+            log.error("WebhookFilter -> Received: {}", hubspotSignature);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
