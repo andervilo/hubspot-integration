@@ -28,7 +28,7 @@ public class HubspotToken {
         this.refreshToken = refreshToken;
         this.tokenType = tokenType;
         this.expiresIn = expiresIn;
-        this.expiresAt = LocalDateTime.now().plusSeconds(expiresIn);
+        this.expiresAt = getExpiresAt(expiresIn);
     }
 
     public static HubspotToken of(String accessToken, String refreshToken, String tokenType, Integer expiresIn) {
@@ -40,6 +40,11 @@ public class HubspotToken {
         this.refreshToken = refreshToken;
         this.tokenType = tokenType;
         this.expiresIn = expiresIn;
+        this.expiresAt = getExpiresAt(expiresIn);
+    }
+
+    private static LocalDateTime getExpiresAt(Integer expiresIn) {
+        return LocalDateTime.now().plusSeconds(expiresIn);
     }
 
     public boolean isExpired() {
