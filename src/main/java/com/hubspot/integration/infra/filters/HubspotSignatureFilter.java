@@ -2,12 +2,10 @@ package com.hubspot.integration.infra.filters;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -15,15 +13,17 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-@Component
 @Slf4j
-public class HubspotSignatureFilter extends OncePerRequestFilter {
+public class HubspotSignatureFilter extends HttpFilter {
 
-    @Value("${hubspot.client-secret}")
-    private String hubspotSecret;
+    private final String hubspotSecret;
+
+    public HubspotSignatureFilter(String hubspotSecret) {
+        this.hubspotSecret = hubspotSecret;
+    }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         log.info("WebhookFilter -> Start Webhook Signature Validation");
@@ -52,7 +52,7 @@ public class HubspotSignatureFilter extends OncePerRequestFilter {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash); // ou Hex.encodeHexString(hash)
+            return Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
             throw new RuntimeException("Error HMAC calculation", e);
         }
