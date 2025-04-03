@@ -54,7 +54,7 @@ public class HubspotSignatureFilter extends OncePerRequestFilter {
             byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash); // ou Hex.encodeHexString(hash)
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao calcular HMAC", e);
+            throw new RuntimeException("Error HMAC calculation", e);
         }
     }
 }
