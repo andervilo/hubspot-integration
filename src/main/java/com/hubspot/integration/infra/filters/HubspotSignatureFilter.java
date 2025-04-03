@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Objects;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -33,7 +34,7 @@ public class HubspotSignatureFilter extends HttpFilter {
         String uri = request.getRequestURI();
         String signatureBase = method + uri + body;
 
-        String expectedSignature = calculateHmacHex(signatureBase, hubspotSecret);
+        String expectedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
         String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
 
         if (!Objects.equals(expectedSignature, receivedSignature)) {
@@ -48,16 +49,17 @@ public class HubspotSignatureFilter extends HttpFilter {
         chain.doFilter(wrappedRequest, response);
     }
 
-    private String calculateHmacHex(String data, String secret) {
+    private String calculateHmacBase64(String data, String secret) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(hash);
+            return Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
             throw new RuntimeException("Erro ao calcular HMAC", e);
         }
     }
+
 
     private String bytesToHex(byte[] bytes) {
         StringBuilder hexString = new StringBuilder();
