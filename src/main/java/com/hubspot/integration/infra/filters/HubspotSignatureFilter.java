@@ -2,20 +2,19 @@ package com.hubspot.integration.infra.filters;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpFilter;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.servlet.http.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.util.Objects;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
-@Slf4j
 public class HubspotSignatureFilter extends HttpFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(HubspotSignatureFilter.class);
     private final String hubspotSecret;
 
     public HubspotSignatureFilter(String hubspotSecret) {
@@ -23,42 +22,53 @@ public class HubspotSignatureFilter extends HttpFilter {
     }
 
     @Override
-    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
 
-        log.info("WebhookFilter -> Start Webhook Signature Validation");
-
-        log.info("WebhookFilter -> Capturing request body");
+        // Encapsula o request para poder ler o corpo várias vezes
         CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest(request);
-        String requestBody = new String(wrappedRequest.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        String body = new String(wrappedRequest.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-        log.info("WebhookFilter -> get X-HubSpot-Signature");
-        String hubspotSignature = request.getHeader("X-HubSpot-Signature");
+        String method = request.getMethod();
+        String uri = request.getRequestURI();
+        String signatureBase = method + uri + body;
 
-        log.info("WebhookFilter -> Calculating expected signature");
-        String expectedSignature = "sha256=" + calculateHmacSHA256(requestBody, hubspotSecret);
+        String expectedSignature = calculateHmacHex(signatureBase, hubspotSecret);
+        String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
 
-        log.info("WebhookFilter -> Comparing expected signature with received signature");
-        if (!expectedSignature.equals(hubspotSignature)) {
+        if (!Objects.equals(expectedSignature, receivedSignature)) {
             log.error("WebhookFilter -> Signature validation failed");
             log.error("WebhookFilter -> Expected: {}", expectedSignature);
-            log.error("WebhookFilter -> Received: {}", hubspotSignature);
+            log.error("WebhookFilter -> Received: {}", receivedSignature);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Assinatura inválida");
             return;
         }
 
-        filterChain.doFilter(wrappedRequest, response);
+        chain.doFilter(wrappedRequest, response);
     }
 
-    private String calculateHmacSHA256(String data, String secret) {
+    private String calculateHmacHex(String data, String secret) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
+            return bytesToHex(hash);
         } catch (Exception e) {
-            throw new RuntimeException("Error HMAC calculation", e);
+            throw new RuntimeException("Erro ao calcular HMAC", e);
         }
     }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1)
+                hexString.append('0');
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
 }
+
 
