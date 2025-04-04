@@ -31,6 +31,6 @@ public class CachedBodyServletInputStream extends ServletInputStream {
 
     @Override
     public void setReadListener(ReadListener readListener) {
-        // não necessário para este caso
+        throw new UnsupportedOperationException();
     }
 }

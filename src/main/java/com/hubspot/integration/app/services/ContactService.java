@@ -25,12 +25,12 @@ public class ContactService {
         var hubspotToken = tokenService.getToken();
 
         if (hubspotToken == null) {
-            log.error("CreateContact: Hubspot token not found");
+            log.error("CreateContact -> Hubspot token not found");
             throw new AuthenticateException("Hubspot token not found");
         }
 
         if(hubspotToken.isExpired()) {
-            log.error("CreateContact: Hubspot token expired");
+            log.error("CreateContact -> Hubspot token expired");
             throw new AuthenticateException("Hubspot token expired");
         }
 
@@ -39,7 +39,7 @@ public class ContactService {
         try{
             hubSpotContactClient.createContact(token, hubspotContact);
         } catch (FeignException e) {
-            log.error("Error on call HubSpot: {} {}", + e.status(), e.getMessage());
+            log.error("CreateContact -> Error on call HubSpot: {} {}", + e.status(), e.getMessage());
             throw e;
         }
 

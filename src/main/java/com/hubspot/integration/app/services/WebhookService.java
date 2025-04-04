@@ -17,9 +17,9 @@ public class WebhookService {
     private final HubspotWebhookEventRepository eventRepository;
 
     public void processWebhook(final List<HubspotWebhookEventCommand> payload) {
-        log.info("[WEBHOOK RECEIVED]: {}", payload);
+        log.info("WebhookService -> WebHook Received]: {}", payload);
         if (CollectionUtils.isEmpty(payload)) {
-            log.warn("Received empty payload");
+            log.warn("WebhookService -> Received empty payload");
             return;
         }
         payload.forEach(event -> eventRepository.save(HubspotWebhookEvent.of(event)));

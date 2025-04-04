@@ -21,8 +21,7 @@ public class HubspotSignatureFilter extends HttpFilter {
     public static final String X_HUB_SPOT_SIGNATURE_V_3 = "X-HubSpot-Signature-v3";
     public static final String HOST = "host";
     public static final String HTTP_PROTOCOL = "https://";
-    @Value("${hubspot.client-secret}")
-    private String hubspotSecret;
+    private final String hubspotSecret;
 
     public HubspotSignatureFilter(String hubspotSecret) {
         this.hubspotSecret = hubspotSecret;
@@ -35,12 +34,12 @@ public class HubspotSignatureFilter extends HttpFilter {
         CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest(request);
         String body = null;
         try {
-            log.info("WebhookFilter -> Start Reading body");
+            log.info("HubspotSignatureFilter -> Start Reading body");
             body = wrappedRequest.getReader()
                     .lines()
                     .collect(Collectors.joining(System.lineSeparator()));
         } catch (Exception e) {
-            log.error("WebhookFilter -> Error on read body: {}", e.getMessage());
+            log.error("HubspotSignatureFilter -> Error on read body: {}", e.getMessage());
             throw new RuntimeException(e);
         }
 
@@ -55,9 +54,9 @@ public class HubspotSignatureFilter extends HttpFilter {
 
 
         if (!Objects.equals(expectedSignature, receivedSignature)) {
-            log.error("WebhookFilter -> Signature validation failed");
-            log.error("WebhookFilter -> Expected: {}", expectedSignature);
-            log.error("WebhookFilter -> Received: {}", receivedSignature);
+            log.error("HubspotSignatureFilter -> Signature validation failed");
+            log.error("HubspotSignatureFilter -> Expected: {}", expectedSignature);
+            log.error("HubspotSignatureFilter -> Received: {}", receivedSignature);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Invalid signature");
             return;
@@ -73,6 +72,7 @@ public class HubspotSignatureFilter extends HttpFilter {
             byte[] rawHmac = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(rawHmac);
         } catch (Exception e) {
+            log.error("HubspotSignatureFilter -> Error on calculate HMAC: {}", e.getMessage());
             throw new RuntimeException("Error on calculate HMAC", e);
         }
     }
