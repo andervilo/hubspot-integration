@@ -27,7 +27,6 @@ public class HubspotSignatureFilter extends HttpFilter {
     protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        // Encapsula o request para poder ler o corpo várias vezes
         CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest(request);
         String body = request.getReader()
                 .lines()
@@ -37,17 +36,19 @@ public class HubspotSignatureFilter extends HttpFilter {
         String uri = request.getRequestURI();
         String signatureBase = method + uri + body;
 
-        log.info("WebhookFilter -> requet: {}", request.toString());
+        log.info("WebhookFilter -> method: {}", method);
+        log.info("WebhookFilter -> uri: {}", uri);
+        log.info("WebhookFilter -> body: {}", body);
 
         String expectedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
         String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
+        log.error("WebhookFilter -> Expected: {}", expectedSignature);
+        log.error("WebhookFilter -> Received: {}", receivedSignature);
 
         if (!Objects.equals(expectedSignature, receivedSignature)) {
             log.error("WebhookFilter -> Signature validation failed");
-            log.error("WebhookFilter -> Expected: {}", expectedSignature);
-            log.error("WebhookFilter -> Received: {}", receivedSignature);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Assinatura inválida");
+            response.getWriter().write("Invalid signature");
             return;
         }
 
