@@ -14,7 +14,8 @@ public class HubspotWebhookEventCommand {
     private Long appId;
     private Long occurredAt;
     private String subscriptionType;
+    private Integer attemptNumber;
     private Long objectId;
-    private String objectType;
+    private String changeFlag;
     private String changeSource;
 }
