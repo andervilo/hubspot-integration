@@ -28,9 +28,16 @@ public class HubspotSignatureFilter extends HttpFilter {
             throws IOException, ServletException {
 
         CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest(request);
-        String body = request.getReader()
-                .lines()
-                .collect(Collectors.joining(System.lineSeparator()));
+        String body = null;
+        try {
+            log.info("WebhookFilter -> Start Reading body");
+            body = wrappedRequest.getReader()
+                    .lines()
+                    .collect(Collectors.joining(System.lineSeparator()));
+        } catch (Exception e) {
+            log.error("WebhookFilter -> Error on read body: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
 
         String method = request.getMethod();
         String uri = request.getRequestURI();
