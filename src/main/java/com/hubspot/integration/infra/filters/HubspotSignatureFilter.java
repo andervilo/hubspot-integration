@@ -45,13 +45,13 @@ public class HubspotSignatureFilter extends HttpFilter {
         String method = request.getMethod();
         String uri = request.getRequestURI();
         String dateTime = request.getHeader("X-HubSpot-Request-Timestamp");
-        String signatureBase = method + uri + body + dateTime;
+        String signatureBase = hubspotSecret + method + uri + body + dateTime;
 
         log.info("WebhookFilter -> method: {}", method);
         log.info("WebhookFilter -> uri: {}", uri);
         log.info("WebhookFilter -> body: {}", body);
         log.info("WebhookFilter -> signatureBase: {}", signatureBase);
-        log.info("WebhookFilter -> dateTime: {}", dateTime);
+        log.info("WebhookFilter -> Secret: {}", hubspotSecret);
 
         String expectedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
         String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
