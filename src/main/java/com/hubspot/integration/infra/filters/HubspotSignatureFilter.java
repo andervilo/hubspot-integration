@@ -4,8 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
@@ -53,20 +51,14 @@ public class HubspotSignatureFilter extends HttpFilter {
         String host = "https://" + request.getHeader("host");
         String signatureBase = method + host + uri + body + dateTime;
 
-        log.info("WebhookFilter -> method: {}", method);
-        log.info("WebhookFilter -> uri: {}", uri);
-        log.info("WebhookFilter -> body: {}", body);
-        log.info("WebhookFilter -> signatureBase: {}", signatureBase);
-        log.info("WebhookFilter -> Secret: {}", hubspotSecret);
-        log.info("WebhookFilter -> host: {}", host);
-
         String expectedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
         String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
-        log.error("WebhookFilter -> Expected: {}", expectedSignature);
-        log.error("WebhookFilter -> Received: {}", receivedSignature);
+
 
         if (!Objects.equals(expectedSignature, receivedSignature)) {
             log.error("WebhookFilter -> Signature validation failed");
+            log.error("WebhookFilter -> Expected: {}", expectedSignature);
+            log.error("WebhookFilter -> Received: {}", receivedSignature);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Invalid signature");
             return;
