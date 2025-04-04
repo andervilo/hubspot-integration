@@ -1,6 +1,7 @@
 package com.hubspot.integration.app.services;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,35 +12,35 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class HubspotSignatureService {
 
     @Value("${hubspot.client-secret}")
     private String hubspotSecret;
 
+    private final RequestBodyReaderService bodyReaderService;
+
     public boolean isValidSignature(HttpServletRequest request) throws IOException {
-        log.info("Validating signature");
+        log.info("ValidSignature -> Validating signature start");
 
         String method = request.getMethod();
         String path = request.getRequestURI();
 
-        String body = request.getReader()
-                .lines()
-                .collect(Collectors.joining(System.lineSeparator()));
+        String body = bodyReaderService.readBody(request);
 
         String signatureBase = method + path + body;
 
         String calculatedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
         String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
 
-        log.info("Calculated signature: {}", calculatedSignature);
-        log.info("Received signature: {}", receivedSignature);
-        log.info("Request body: {}", body);
-        log.info("Request method: {}", method);
-        log.info("Request path: {}", path);
+        log.info("ValidSignature -> Calculated signature: {}", calculatedSignature);
+        log.info("ValidSignature -> Received signature: {}", receivedSignature);
+        log.info("ValidSignature -> Request body: {}", body);
+        log.info("ValidSignature -> Request method: {}", method);
+        log.info("ValidSignature -> Request path: {}", path);
 
         try {
             return Objects.equals(calculatedSignature, receivedSignature);
