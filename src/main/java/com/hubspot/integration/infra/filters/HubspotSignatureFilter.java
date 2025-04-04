@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +18,8 @@ import javax.crypto.spec.SecretKeySpec;
 public class HubspotSignatureFilter extends HttpFilter {
 
     private static final Logger log = LoggerFactory.getLogger(HubspotSignatureFilter.class);
+
+    @Value("${hubspot.client-secret}")
     private final String hubspotSecret;
 
     public HubspotSignatureFilter(String hubspotSecret) {
@@ -48,6 +51,7 @@ public class HubspotSignatureFilter extends HttpFilter {
         log.info("WebhookFilter -> uri: {}", uri);
         log.info("WebhookFilter -> body: {}", body);
         log.info("WebhookFilter -> signatureBase: {}", signatureBase);
+        log.info("WebhookFilter -> dateTime: {}", dateTime);
 
         String expectedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
         String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
