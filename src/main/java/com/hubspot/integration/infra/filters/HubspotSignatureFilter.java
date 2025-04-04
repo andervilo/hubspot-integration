@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -28,7 +29,9 @@ public class HubspotSignatureFilter extends HttpFilter {
 
         // Encapsula o request para poder ler o corpo várias vezes
         CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest(request);
-        String body = new String(wrappedRequest.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        String body = request.getReader()
+                .lines()
+                .collect(Collectors.joining(System.lineSeparator()));
 
         String method = request.getMethod();
         String uri = request.getRequestURI();
@@ -55,24 +58,13 @@ public class HubspotSignatureFilter extends HttpFilter {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
+            byte[] rawHmac = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(rawHmac);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao calcular HMAC", e);
+            throw new RuntimeException("Error on calculate HMAC", e);
         }
     }
 
-
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : bytes) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1)
-                hexString.append('0');
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
 }
 
 
