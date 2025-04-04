@@ -50,7 +50,7 @@ public class HubspotSignatureFilter extends HttpFilter {
         String method = request.getMethod();
         String uri = request.getRequestURI();
         String dateTime = request.getHeader("X-HubSpot-Request-Timestamp");
-        String host = "https://" + request.getHeader("X-HubSpot-Request-Timestamp");
+        String host = "https://" + request.getHeader("host");
         String signatureBase = method + host + uri + body + dateTime;
 
         log.info("WebhookFilter -> method: {}", method);
