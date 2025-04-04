@@ -3,6 +3,7 @@ package com.hubspot.integration.infra.filters;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,17 +11,20 @@ import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Enumeration;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+@Slf4j
 public class HubspotSignatureFilter extends HttpFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(HubspotSignatureFilter.class);
-
     @Value("${hubspot.client-secret}")
-    private final String hubspotSecret;
+    private String hubspotSecret;
+
+    @Value("${app.url}")
+    private String appUrl;
 
     public HubspotSignatureFilter(String hubspotSecret) {
         this.hubspotSecret = hubspotSecret;
@@ -30,6 +34,7 @@ public class HubspotSignatureFilter extends HttpFilter {
     protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
+        printAllHeaders(request);
         CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest(request);
         String body = null;
         try {
@@ -45,13 +50,14 @@ public class HubspotSignatureFilter extends HttpFilter {
         String method = request.getMethod();
         String uri = request.getRequestURI();
         String dateTime = request.getHeader("X-HubSpot-Request-Timestamp");
-        String signatureBase = hubspotSecret + method + uri + body + dateTime;
+        String signatureBase = method + appUrl + uri + body + dateTime;
 
         log.info("WebhookFilter -> method: {}", method);
         log.info("WebhookFilter -> uri: {}", uri);
         log.info("WebhookFilter -> body: {}", body);
         log.info("WebhookFilter -> signatureBase: {}", signatureBase);
         log.info("WebhookFilter -> Secret: {}", hubspotSecret);
+        log.info("WebhookFilter -> App URL: {}", appUrl);
 
         String expectedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
         String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
@@ -76,6 +82,16 @@ public class HubspotSignatureFilter extends HttpFilter {
             return Base64.getEncoder().encodeToString(rawHmac);
         } catch (Exception e) {
             throw new RuntimeException("Error on calculate HMAC", e);
+        }
+    }
+
+    private void printAllHeaders(HttpServletRequest request) {
+        log.info("WebhookFilter -> List All Headers");
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            String headerValue = request.getHeader(headerName);
+            System.out.println(headerName + ": " + headerValue);
         }
     }
 
