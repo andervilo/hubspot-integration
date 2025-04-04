@@ -6,6 +6,9 @@ import com.hubspot.integration.infra.repositories.HubspotWebhookEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -13,9 +16,13 @@ import org.springframework.stereotype.Service;
 public class WebhookService {
     private final HubspotWebhookEventRepository eventRepository;
 
-    public void processWebhook(final HubspotWebhookEventCommand payload) {
+    public void processWebhook(final List<HubspotWebhookEventCommand> payload) {
         log.info("[WEBHOOK RECEIVED]: {}", payload);
-        var hubspotEvent = HubspotWebhookEvent.of(payload);
-        eventRepository.save(hubspotEvent);
+        if (CollectionUtils.isEmpty(payload)) {
+            log.warn("Received empty payload");
+            return;
+        }
+        payload.forEach(event -> eventRepository.save(HubspotWebhookEvent.of(event)));
+
     }
 }
