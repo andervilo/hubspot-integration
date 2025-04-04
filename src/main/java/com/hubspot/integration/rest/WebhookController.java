@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -21,7 +22,7 @@ public class WebhookController {
     private final HubspotSignatureService signatureService;
 
     @PostMapping("/contact")
-    public ResponseEntity<?> handleWebhook(@RequestBody List<HubspotWebhookEventCommand> command, HttpServletRequest request) {
+    public ResponseEntity<?> handleWebhook(@RequestBody List<HubspotWebhookEventCommand> command, HttpServletRequest request) throws IOException {
         if (!signatureService.isValidSignature(request)) return ResponseEntity.status(401).body("Invalid signature");
         webhookService.processWebhook(command);
         return ResponseEntity.ok().build();

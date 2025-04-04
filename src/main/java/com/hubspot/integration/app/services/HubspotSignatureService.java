@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
@@ -19,26 +20,28 @@ public class HubspotSignatureService {
     @Value("${hubspot.client-secret}")
     private String hubspotSecret;
 
-    public boolean isValidSignature(HttpServletRequest request) {
+    public boolean isValidSignature(HttpServletRequest request) throws IOException {
+        log.info("Validating signature");
+
+        String method = request.getMethod();
+        String path = request.getRequestURI();
+
+        String body = request.getReader()
+                .lines()
+                .collect(Collectors.joining(System.lineSeparator()));
+
+        String signatureBase = method + path + body;
+
+        String calculatedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
+        String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
+
+        log.info("Calculated signature: {}", calculatedSignature);
+        log.info("Received signature: {}", receivedSignature);
+        log.info("Request body: {}", body);
+        log.info("Request method: {}", method);
+        log.info("Request path: {}", path);
+
         try {
-            String method = request.getMethod();
-            String path = request.getRequestURI();
-
-            String body = request.getReader()
-                    .lines()
-                    .collect(Collectors.joining(System.lineSeparator()));
-
-            String signatureBase = method + path + body;
-
-            String calculatedSignature = calculateHmacBase64(signatureBase, hubspotSecret);
-            String receivedSignature = request.getHeader("X-HubSpot-Signature-v3");
-
-            log.info("Calculated signature: {}", calculatedSignature);
-            log.info("Received signature: {}", receivedSignature);
-            log.info("Request body: {}", body);
-            log.info("Request method: {}", method);
-            log.info("Request path: {}", path);
-
             return Objects.equals(calculatedSignature, receivedSignature);
         } catch (Exception e) {
             return false;
