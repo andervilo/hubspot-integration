@@ -3,10 +3,12 @@ package com.hubspot.integration.app.services;
 import com.hubspot.integration.app.clients.HubSpotContactClient;
 import com.hubspot.integration.app.dto.command.CreateContactCommand;
 import com.hubspot.integration.app.dto.command.HubSpotContactCreateCommand;
-import com.hubspot.integration.infra.configs.OAuthConfig;
 import com.hubspot.integration.infra.exception.AuthenticateException;
-import com.hubspot.integration.infra.utils.RateLimiter;
-import feign.FeignException;
+import io.github.resilience4j.core.functions.CheckedRunnable;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.ratelimiter.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,12 +17,17 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class ContactService {
-    private final OAuthConfig config;
-    private final RateLimiter rateLimiter;
+
     private final HubTokenService tokenService;
     private final HubSpotContactClient hubSpotContactClient;
+    private final RateLimiterRegistry rateLimiterRegistry;
+    private final CircuitBreakerRegistry circuitBreakerRegistry;
 
     public void createContact(CreateContactCommand command) {
+        RateLimiter rateLimiter = rateLimiterRegistry.rateLimiter("hubspotRateLimiter");
+        CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("hubspotCircuitBreaker");
+
+        log.info("CreateContact -> Start creating contact: {}", command);
         var hubspotContact = HubSpotContactCreateCommand.from(command);
         var hubspotToken = tokenService.getToken();
 
@@ -36,13 +43,20 @@ public class ContactService {
 
         var token = "Bearer "+ hubspotToken.getAccessToken();
 
-        try{
-            hubSpotContactClient.createContact(token, hubspotContact);
-        } catch (FeignException e) {
-            log.error("CreateContact -> Error on call HubSpot: {} {}", + e.status(), e.getMessage());
-            throw e;
-        }
+        CheckedRunnable protectedCall = RateLimiter
+            .decorateCheckedRunnable(rateLimiter,
+                CircuitBreaker.decorateCheckedRunnable(circuitBreaker,() -> hubSpotContactClient.createContact(token, hubspotContact))
+            );
 
-        //rateLimiter.acquire();
+        try {
+            protectedCall.run();
+        } catch (Throwable t) {
+            log.error("CreateContact -> Error on create Contact HubSpot: {}", t.getMessage(), t);
+            fallbackCreateContact(token, hubspotContact, t);
+        }
+    }
+
+    private void fallbackCreateContact(String authToken, HubSpotContactCreateCommand request, Throwable t) {
+        log.warn("CreateContact -> Fallback: Contact not send to HubSpot: {}", request);
     }
 }
