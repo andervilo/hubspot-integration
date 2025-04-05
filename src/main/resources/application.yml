@@ -21,3 +21,23 @@ hubspot:
   auth-url: ${HUBSPOT_AUTH_URL}
   token-url: ${HUBSPOT_TOKEN_URL}
   api-url: ${HUBSPOT_API_URL}
+
+resilience4j:
+  ratelimiter:
+    instances:
+      hubspotRateLimiter:
+        limit-for-period: 190
+        limit-refresh-period: 10s
+        timeout-duration: 0
+
+circuitbreaker:
+  instances:
+    hubspotCircuitBreaker:
+      register-health-indicator: true
+      sliding-window-type: COUNT_BASED
+      sliding-window-size: 10
+      minimum-number-of-calls: 5
+      failure-rate-threshold: 50
+      wait-duration-in-open-state: 10s
+      permitted-number-of-calls-in-half-open-state: 3
+      automatic-transition-from-open-to-half-open-enabled: true
